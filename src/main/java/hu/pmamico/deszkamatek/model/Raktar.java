@@ -62,6 +62,7 @@ public class Raktar {
             return exactMatch.get();
         }
 
+
         Optional<Deszka> cuttableMatch = findAndRemoveCuttableMatch(igeny);
         if (cuttableMatch.isPresent()) {
             Deszka deszka = cuttableMatch.get();
@@ -72,6 +73,16 @@ public class Raktar {
             return vagottak.getFirst();
         }
 
+        Optional<Deszka> xCuttableMatch = findAndRemoveXCuttableMatch(igeny);
+        if (xCuttableMatch.isPresent()) {
+            Deszka deszka = xCuttableMatch.get();
+            log.info("Hosszában vágható deszka találva: {}", deszka.getHosszusag());
+
+            var vagottak = deszka.hosszantiVagas(igeny.getX(), true);
+            raktarozott.add(vagottak.getFirst());
+            return vagottak.getLast();
+        }
+
         Optional<Deszka> softMatch = findAndRemoveSoftMatch(igeny);
         if (softMatch.isPresent()) {
             var deszka = softMatch.get();
@@ -79,6 +90,7 @@ public class Raktar {
             log.info(String.valueOf(getRaktarozott().size()));
             return deszka;
         }
+
 
         // If we reach here, no suitable board was found
         log.error("Nem található megfelelő deszka az igényhez: {}", igeny);
@@ -136,7 +148,7 @@ public class Raktar {
         for (int i = 0; i < raktarozott.size(); i++) {
             Deszka d = raktarozott.get(i);
             if (hasBothTopAndBottomCut(d)) continue; // Skip boards with both top and bottom sides cut
-            if (!canBeCutToMatch(d, igeny)) continue;
+            if (!canY_BeCutToMatch(d, igeny)) continue;
 
             boolean hasCut = hasVagottSide(d);
             if (hasCut) {
@@ -156,6 +168,35 @@ public class Raktar {
         }
         return Optional.empty();
     }
+
+
+    private Optional<Deszka> findAndRemoveXCuttableMatch(DeszkaIgeny igeny) {
+        int firstNonCutIndex = -1;
+
+        for (int i = 0; i < raktarozott.size(); i++) {
+            Deszka d = raktarozott.get(i);
+            if (hasBothTopAndBottomCut(d)) continue; // Skip boards with both top and bottom sides cut
+            if (!canX_BeCutToMatch(d, igeny)) continue;
+
+            boolean hasCut = hasVagottSide(d);
+            if (hasCut) {
+                // találtunk vágott oldalút – ez a preferált, azonnal kivesszük
+                Deszka chosen = raktarozott.remove(i);
+                return Optional.of(chosen);
+            }
+            // jegyezzük meg az első nem vágott jelöltet esetre, ha később sem lesz vágott
+            if (firstNonCutIndex == -1) {
+                firstNonCutIndex = i;
+            }
+        }
+
+        if (firstNonCutIndex != -1) {
+            Deszka chosen = raktarozott.remove(firstNonCutIndex);
+            return Optional.of(chosen);
+        }
+        return Optional.empty();
+    }
+
     private boolean hasVagottSide(Deszka deszka) {
         return deszka.getBalOldal() == OldalAllapot.VAGOTT ||
                deszka.getFelsoOldal() == OldalAllapot.VAGOTT ||
@@ -185,17 +226,30 @@ public class Raktar {
                (igeny.getAlsoOldal() == null || deszka.getAlsoOldal() == igeny.getAlsoOldal());
     }
 
-    private boolean canBeCutToMatch(Deszka deszka, DeszkaIgeny igeny) {
+    private boolean canY_BeCutToMatch(Deszka deszka, DeszkaIgeny igeny) {
+
         if (igeny.getY() != null && deszka.getHosszusag() > igeny.getY()) {
             return true;
         }
 
-        if (igeny.getX() != null && deszka.getSzelesseg() > igeny.getX()) {
-            return true;
-        }
+
 
         return false;
     }
+
+    private boolean canX_BeCutToMatch(Deszka deszka, DeszkaIgeny igeny) {
+
+        if (igeny.getX() != null && deszka.getHosszusag() > igeny.getX()) {
+            return true;
+        }
+
+
+
+        return false;
+    }
+
+
+
 
     public boolean ures(){
         return raktarozott.isEmpty();

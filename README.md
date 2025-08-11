@@ -7,7 +7,9 @@ A Deszkamatek egy padlótervezési alkalmazás, amely segít optimalizálni a de
 https://deszkamatek.onrender.com
 
 ## Fejlesztési irányok
-- Stafnik kezelése
-- Többféle algoritmus
-- Nyersanyag igény számítása
-- Hibakezelés (hibás vágás, anyaghiba)
+-  [ ] Utolsó, hosszában vágott darab kezelése
+-  [ ] Statisztikák mutatása (vágás szám, m2 elhasznált anyag, db elhasznált anyag)
+-  [ ] Stafnik kezelése
+-  [ ] Többféle algoritmus
+-  [ ] Nyersanyag igény számítása
+-  [ ] Hibakezelés (hibás vágás, anyaghiba)
