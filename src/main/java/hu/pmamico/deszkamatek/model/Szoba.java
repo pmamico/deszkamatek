@@ -36,6 +36,10 @@ public class Szoba {
     }
 
     public DeszkaIgeny next(){
+        Double xIgeny = null;
+        if(kurzor.getX()<0){
+            xIgeny = kurzor.getX() + getStandardSzelesseg() - dilatacio;
+        }
         switch (kurzor.getEpitesiIrany()) {
             case ESZAK:
                 double yEszak = kurzor.getY();
@@ -44,6 +48,7 @@ public class Szoba {
                     yEszak = 0.1; // Small positive value to avoid validation error
                 }
                 return DeszkaIgeny.builder()
+                        .x(xIgeny)
                         .y(yEszak - dilatacio)
                         .felsoOldal(
                                 kurzor.getY() == (this.y - dilatacio) ? null : CSAP
@@ -59,6 +64,7 @@ public class Szoba {
                     yDel = 0.1; // Small positive value to avoid validation error
                 }
                 return DeszkaIgeny.builder()
+                        .x(xIgeny)
                         .y(yDel)
                         .felsoOldal(
                                 kurzor.getY() == dilatacio ? CSAP : null
@@ -79,7 +85,7 @@ public class Szoba {
             kurzor.setX(kurzor.getX() - deszka.getSzelesseg() );
         }
         int sorszam = lerakottDeszkak.size() + 1;
-        var lerakottDeszka = new LerakottDeszka(kurzor, deszka, sorszam);
+        var lerakottDeszka = new LerakottDeszka(kurzor, deszka, sorszam, dilatacio);
         log.debug(lerakottDeszka.toString());
         lerakottDeszkak.add(lerakottDeszka);
         kurzor.mozgat(this, deszka);
@@ -87,7 +93,15 @@ public class Szoba {
 
     public boolean kesz(){
         return kurzor!=null && 
-               kurzor.getX() <= dilatacio && 
+               kurzor.getX() + getStandardSzelesseg() <= dilatacio &&
                (kurzor.getY() == dilatacio || kurzor.getY() == this.y - dilatacio);
+    }
+
+
+    public double getStandardSzelesseg(){
+        if(lerakottDeszkak.isEmpty()) {
+            return 0;
+        }
+        return lerakottDeszkak.getFirst().getDeszka().getSzelesseg();
     }
 }

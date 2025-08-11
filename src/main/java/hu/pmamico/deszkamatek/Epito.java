@@ -24,6 +24,7 @@ public class Epito {
         while (!raktar.ures() && !szoba.kesz()){
             log.info("Kurzor: {}",szoba.getKurzor());
             var deszkaigeny = szoba.next();
+            log.info("Deszkaigeny: {}",deszkaigeny);
             var deszka = raktar.keres(deszkaigeny, szoba.getKurzor().getEpitesiIrany());
             log.info("Találat: {}",deszka);
             szoba.lerak(deszka);

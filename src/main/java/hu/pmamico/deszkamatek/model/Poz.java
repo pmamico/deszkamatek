@@ -7,12 +7,12 @@ public class Poz {
     private double x;
     private double y;
 
-    public Poz(Kurzor kurzor, Deszka deszka) {
+    public Poz(Kurzor kurzor, Deszka deszka, double dilatacio) {
         if (kurzor.getEpitesiIrany().equals(LerakasIrany.ESZAK)) {
-            this.x = kurzor.getX();
+            this.x = Math.max(kurzor.getX(), dilatacio);
             this.y = kurzor.getY();
         } else {
-            this.x = kurzor.getX();
+            this.x = Math.max(kurzor.getX(), dilatacio);
             this.y = kurzor.getY() + deszka.getHosszusag();
         }
     }

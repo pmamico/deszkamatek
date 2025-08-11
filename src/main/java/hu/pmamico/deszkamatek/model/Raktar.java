@@ -2,6 +2,7 @@ package hu.pmamico.deszkamatek.model;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thymeleaf.util.NumberUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -70,6 +71,12 @@ public class Raktar {
 
             var vagottak = deszka.vagas(igeny.getY(), lerakasIrany);
             raktarozott.add(vagottak.getLast());
+
+            if(igeny.getX() != null && vagottak.getFirst().getSzelesseg() != igeny.getX()){
+                var hosszabanVagottak = vagottak.getFirst().hosszantiVagas(igeny.getX(), true);
+                raktarozott.add(hosszabanVagottak.getLast());
+                return hosszabanVagottak.getFirst();
+            }
             return vagottak.getFirst();
         }
 
@@ -79,8 +86,8 @@ public class Raktar {
             log.info("Hosszában vágható deszka találva: {}", deszka.getHosszusag());
 
             var vagottak = deszka.hosszantiVagas(igeny.getX(), true);
-            raktarozott.add(vagottak.getFirst());
-            return vagottak.getLast();
+            raktarozott.add(vagottak.getLast());
+            return vagottak.getFirst();
         }
 
         Optional<Deszka> softMatch = findAndRemoveSoftMatch(igeny);

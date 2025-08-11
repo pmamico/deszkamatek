@@ -56,6 +56,33 @@ public class Deszka {
         return eredmeny;
     }
 
+    public List<Deszka> hosszantiVagas(double szelesseg, boolean jobbOldalMarad) {
+        log.info("Deszka vágása: széles={}, eredeti méret: {}x{}", szelesseg, szelesseg, hosszusag);
+
+        if (szelesseg <= 0) {
+           szelesseg = Math.abs(szelesseg);
+           jobbOldalMarad = !jobbOldalMarad;
+        }
+
+        List<Deszka> eredmeny = new ArrayList<>();
+
+
+        final double jobbSzeles = (jobbOldalMarad ? szelesseg : this.szelesseg - szelesseg);
+        final double balSzeles = (jobbOldalMarad ? this.szelesseg - szelesseg : szelesseg);
+
+        Deszka jobb = buildKeskenyDeszka(jobbSzeles, this.jobbOldal, OldalAllapot.VAGOTT);
+        Deszka bal = buildKeskenyDeszka(balSzeles, OldalAllapot.VAGOTT, this.balOldal);
+
+        eredmeny.add(jobb);
+        eredmeny.add(bal);
+
+        if(!jobbOldalMarad) {
+            eredmeny = eredmeny.reversed();
+        }
+
+        return eredmeny;
+    }
+
     private Deszka buildDeszka(double hossz,
                                OldalAllapot alsoOldal,
                                OldalAllapot felsoOldal) {
@@ -68,4 +95,22 @@ public class Deszka {
                 .felsoOldal(felsoOldal)
                 .build();
     }
+
+    private Deszka buildKeskenyDeszka(double szelesseg,
+                               OldalAllapot jobbOldal,
+                               OldalAllapot balOldal) {
+        return Deszka.builder()
+                .szelesseg(szelesseg)
+                .hosszusag(this.hosszusag)
+                .balOldal(balOldal)
+                .jobbOldal(jobbOldal)
+                .alsoOldal(this.alsoOldal)
+                .felsoOldal(this.felsoOldal)
+                .build();
+    }
+
+    public boolean hosszabanVagott(){
+        return (this.balOldal == OldalAllapot.VAGOTT || this.jobbOldal == OldalAllapot.VAGOTT);
+    }
+
 }

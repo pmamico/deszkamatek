@@ -9,8 +9,8 @@ public class LerakottDeszka {
     private Deszka deszka;
     private int sorszam;
 
-    public LerakottDeszka(Kurzor kurzor, Deszka deszka, int sorszam) {
-        this.poz = new Poz(kurzor, deszka);
+    public LerakottDeszka(Kurzor kurzor, Deszka deszka, int sorszam, double dilatacio) {
+        this.poz = new Poz(kurzor, deszka, dilatacio);
         this.deszka = deszka;
         this.sorszam = sorszam;
     }
