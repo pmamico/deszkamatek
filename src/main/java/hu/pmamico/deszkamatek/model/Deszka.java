@@ -18,15 +18,18 @@ public class Deszka {
 
     private double szelesseg;
     private double hosszusag;
-    private double vastagsag;
 
+    @Builder.Default
     private OldalAllapot balOldal = OldalAllapot.CSAP;
+    @Builder.Default
     private OldalAllapot felsoOldal = OldalAllapot.CSAP;
+    @Builder.Default
     private OldalAllapot jobbOldal = OldalAllapot.NUT;
+    @Builder.Default
     private OldalAllapot alsoOldal = OldalAllapot.NUT;
 
-    public List<Deszka> vagas(double hossz) {
-        log.info("Deszka vágása: hossz={}, eredeti méret: {}x{}x{}", hossz, szelesseg, hosszusag, vastagsag);
+    public List<Deszka> vagas(double hossz, LerakasIrany lerakasIrany) {
+        log.info("Deszka vágása: hossz={}, eredeti méret: {}x{}", hossz, szelesseg, hosszusag);
         if (hossz <= 0 || hossz >= hosszusag) {
             log.error("Érvénytelen vágási hossz: {}", hossz);
             throw new IllegalArgumentException("A vágási hossz érvénytelen");
@@ -34,29 +37,35 @@ public class Deszka {
 
         List<Deszka> eredmeny = new ArrayList<>();
 
-        Deszka elsoResz = Deszka.builder()
-                .szelesseg(this.szelesseg)
-                .hosszusag(hossz)
-                .vastagsag(this.vastagsag)
-                .balOldal(this.balOldal)
-                .jobbOldal(this.jobbOldal)
-                .alsoOldal(this.alsoOldal)
-                .felsoOldal(OldalAllapot.VAGOTT)
-                .build();
+        final boolean alulVagunk = (lerakasIrany == LerakasIrany.DEL);
 
-        Deszka masodikResz = Deszka.builder()
-                .szelesseg(this.szelesseg)
-                .hosszusag(this.hosszusag - hossz)
-                .vastagsag(this.vastagsag)
-                .balOldal(this.balOldal)
-                .jobbOldal(this.jobbOldal)
-                .alsoOldal(OldalAllapot.VAGOTT)
-                .felsoOldal(this.felsoOldal)
-                .build();
+        final double alsoHossz = alulVagunk ? hossz : this.hosszusag - hossz;
+        final double felsoHossz = alulVagunk ? this.hosszusag - hossz : hossz;
 
-        eredmeny.add(elsoResz);
-        eredmeny.add(masodikResz);
+        Deszka also = buildDeszka(alsoHossz, this.alsoOldal, OldalAllapot.VAGOTT);
+        Deszka felso = buildDeszka(felsoHossz, OldalAllapot.VAGOTT, this.felsoOldal);
+
+        eredmeny.add(also);
+        eredmeny.add(felso);
+
+        if(!alulVagunk) {
+            eredmeny = eredmeny.reversed();
+        }
+
 
         return eredmeny;
+    }
+
+    private Deszka buildDeszka(double hossz,
+                               OldalAllapot alsoOldal,
+                               OldalAllapot felsoOldal) {
+        return Deszka.builder()
+                .szelesseg(this.szelesseg)
+                .hosszusag(hossz)
+                .balOldal(this.balOldal)
+                .jobbOldal(this.jobbOldal)
+                .alsoOldal(alsoOldal)
+                .felsoOldal(felsoOldal)
+                .build();
     }
 }

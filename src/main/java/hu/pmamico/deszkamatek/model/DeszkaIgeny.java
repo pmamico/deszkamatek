@@ -6,9 +6,8 @@ import lombok.Data;
 @Data
 @Builder
 public class DeszkaIgeny {
-    private Double szelesseg;
-    private Double hosszusag;
-    private Double vastagsag;
+    private Double x;
+    private Double y;
 
     private OldalAllapot balOldal;
     private OldalAllapot felsoOldal;
