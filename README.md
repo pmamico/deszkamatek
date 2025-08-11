@@ -1,29 +1,13 @@
 # Deszkamatek
 
-## TODO
+## Rövid leírás
+A Deszkamatek egy padlótervezési alkalmazás, amely segít optimalizálni a deszkák felhasználását szobák padlózásánál. Az alkalmazás figyelembe veszi a szoba méreteit, a dilatációt, és a deszkák közötti kapcsolódási módokat (csap és nút).
 
-- [ ] jelmagyarázat
-- [ ] nagyobb canvas
-- [x] opcionálisan meg lehessen jeleníteni a nút, csap és vágás helyeket külön 
-- [x] formon lehessen megadni a raktárat és a szoba méretét
-- [ ] jelenjen meg a raktár tartalma kicsiben
-- [x] látszódjanak a méretek a felületen
-- [ ] hibát lehessen vinni a kalkulációba
-- [ ] hiány esetén adja meg, hány plusz darabra lenne szükség
-- [ ] kisebb deszkákkal logika, ha kettőből nem kirakható
+## Próbáld ki
+https://deszkamatek.onrender.com
 
-## Docker
-
-### Build the Docker image
-
-```bash
-docker build -t deszkamatek .
-```
-
-### Run the Docker container
-
-```bash
-docker run -p 8080:8080 deszkamatek
-```
-
-The application will be available at http://localhost:8080
+## Fejlesztési irányok
+- Stafnik kezelése
+- Többféle algoritmus
+- Nyersanyag igény számítása
+- Hibakezelés (hibás vágás, anyaghiba)

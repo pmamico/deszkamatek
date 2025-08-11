@@ -72,6 +72,9 @@
         <h1>Deszkamatek - Szoba Megjelenítő</h1>
         <div style="text-align: center; margin-bottom: 20px;">
             <a href="/raktar" style="color: #4CAF50; text-decoration: none;">Raktár kezelése</a>
+            <div style="color: #999999; font-size: 12px; margin-top: 5px;" th:if="${buildTime}">
+                Build: <span th:text="${buildTime}">2023-01-01 00:00:00</span>
+            </div>
         </div>
         <div class="controls">
             <div class="input-group">
@@ -89,7 +92,7 @@
             <button id="calculate-btn">Újraszámolás</button>
         </div>
         <div id="canvas-container">
-            <canvas id="szoba-canvas" width="800" height="700"></canvas>
+            <canvas id="szoba-canvas" width="800" height="800"></canvas>
         </div>
     </div>
 
@@ -219,7 +222,7 @@
 
             // Canvas méretezése a szoba méretéhez
             const canvasWidth = 800;
-            const canvasHeight = 700;
+            const canvasHeight = 800;
             const padding = 50;
             const topPadding = 100; // Extra padding at the top for tooltips
 
@@ -247,7 +250,7 @@
                 `X tengely: ${szoba.x} cm`, 
                 {
                     left: padding + (szoba.x * scale) / 2,
-                    top: topPadding + szoba.y * scale + 20,
+                    top: topPadding + szoba.y * scale + 30,
                     fontSize: 14,
                     fill: 'black',
                     originX: 'center',
@@ -276,7 +279,7 @@
                 `Dilatáció: ${szoba.dilatacio} cm`, 
                 {
                     left: padding + (szoba.x * scale) / 2,
-                    top: topPadding + szoba.y * scale + 40,
+                    top: topPadding + szoba.y * scale + 60,
                     fontSize: 14,
                     fill: 'black',
                     originX: 'center',
