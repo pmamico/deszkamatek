@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deszkamatek - Szoba Megjelenítő</title>
+    <title>Deszkamatek - Padló Tervező</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -69,13 +69,14 @@
 </head>
 <body>
     <div class="container">
-        <h1>Deszkamatek - Szoba Megjelenítő</h1>
-        <div style="text-align: center; margin-bottom: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;" class="nav-links">
+            <a href="/" style="font-weight: bold;">Szoba Megjelenítő</a> | 
             <a href="/raktar" style="color: #4CAF50; text-decoration: none;">Raktár kezelése</a>
             <div style="color: #999999; font-size: 12px; margin-top: 5px;" th:if="${buildTime}">
                 Build: <span th:text="${buildTime}">2023-01-01 00:00:00</span>
             </div>
         </div>
+        <h1>Padló Tervező</h1>
         <div class="controls">
             <div class="input-group">
                 <label for="x-input">Szélesség (X):</label>

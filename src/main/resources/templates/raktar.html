@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deszkamatek - Raktár Kezelő</title>
+    <title>Deszkamatek - Padló Tervező</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -116,11 +116,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>Deszkamatek - Raktár Kezelő</h1>
-
         <div class="nav-links">
-            <a href="/">Vissza a Szoba Megjelenítőhöz</a>
+            <a href="/">Vissza a Szoba Megjelenítőhöz</a> | 
+            <a href="/raktar" style="font-weight: bold;">Raktár kezelése</a>
+            <div style="color: #999999; font-size: 12px; margin-top: 5px;" th:if="${buildTime}">
+                Build: <span th:text="${buildTime}">2023-01-01 00:00:00</span>
+            </div>
         </div>
+
+        <h1>Padló Tervező</h1>
 
         <div id="message" class="message"></div>
 

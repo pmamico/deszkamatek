@@ -1,6 +1,7 @@
 package hu.pmamico.deszkamatek.controller;
 
 import hu.pmamico.deszkamatek.Epito;
+import hu.pmamico.deszkamatek.config.BuildInfoConfig.BuildInfo;
 import hu.pmamico.deszkamatek.model.Deszka;
 import hu.pmamico.deszkamatek.model.LerakottDeszka;
 import hu.pmamico.deszkamatek.model.Raktar;
@@ -24,14 +25,17 @@ import java.util.Map;
 public class EpitoController {
 
     private final RaktarService raktarService;
+    private final BuildInfo buildInfo;
 
     @GetMapping("/")
     public String index(Model model) {
+        model.addAttribute("buildTime", buildInfo.getBuildTime());
         return "index";
     }
 
     @GetMapping("/raktar")
     public String raktar(Model model) {
+        model.addAttribute("buildTime", buildInfo.getBuildTime());
         return "raktar";
     }
 
