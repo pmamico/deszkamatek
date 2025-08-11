@@ -19,8 +19,9 @@ public class Kurzor {
     }
 
     public Kurzor(Szoba szoba) {
-        this.x = szoba.getX();
-        this.y = szoba.getY();
+        // Apply dilation to the initial position - start from the effective room size
+        this.x = szoba.getX() - szoba.getDilatacio();
+        this.y = szoba.getY() - szoba.getDilatacio();
         this.epitesiIrany = LerakasIrany.ESZAK;
     }
 
@@ -28,13 +29,17 @@ public class Kurzor {
         switch (epitesiIrany) {
             case ESZAK:
                 this.y = this.y - deszka.getHosszusag();
-                if (this.y == 0){
+                // Check if cursor reached the bottom edge with dilation
+                if (this.y <= szoba.getDilatacio()){
+                    this.y = szoba.getDilatacio(); // Ensure cursor doesn't go below dilation
                     oszlopKesz(deszka);
                 }
                 break;
             case DEL:
                 this.y = this.y + deszka.getHosszusag();
-                if (this.y == szoba.getY()){
+                // Check if cursor reached the top edge with dilation
+                if (this.y >= szoba.getY() - szoba.getDilatacio()){
+                    this.y = szoba.getY() - szoba.getDilatacio(); // Ensure cursor doesn't go above effective top edge
                     oszlopKesz(deszka);
                 }
         }

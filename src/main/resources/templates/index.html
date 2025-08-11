@@ -82,6 +82,10 @@
                 <label for="y-input">Magasság (Y):</label>
                 <input type="number" id="y-input" value="397" min="10" max="1000">
             </div>
+            <div class="input-group">
+                <label for="dilatacio-input">Dilatáció (cm):</label>
+                <input type="number" id="dilatacio-input" value="1.5" min="0" max="10" step="0.1">
+            </div>
             <button id="calculate-btn">Újraszámolás</button>
         </div>
         <div id="canvas-container">
@@ -191,14 +195,16 @@
         function fetchSzobaData() {
             const xInput = document.getElementById('x-input');
             const yInput = document.getElementById('y-input');
+            const dilatacioInput = document.getElementById('dilatacio-input');
 
             const x = xInput.value;
             const y = yInput.value;
+            const dilatacio = dilatacioInput.value;
 
             // Tisztítjuk a canvas-t új adatok betöltése előtt
             canvas.clear();
 
-            fetch(`/api/epito?x=${x}&y=${y}`)
+            fetch(`/api/epito?x=${x}&y=${y}&dilatacio=${dilatacio}`)
                 .then(response => response.json())
                 .then(data => {
                     renderSzoba(data);
@@ -265,6 +271,35 @@
             );
             canvas.add(yAxisLabel);
 
+            // Dilatáció értékének megjelenítése
+            const dilatacioLabel = new fabric.Text(
+                `Dilatáció: ${szoba.dilatacio} cm`, 
+                {
+                    left: padding + (szoba.x * scale) / 2,
+                    top: topPadding + szoba.y * scale + 40,
+                    fontSize: 14,
+                    fill: 'black',
+                    originX: 'center',
+                    selectable: false
+                }
+            );
+            canvas.add(dilatacioLabel);
+
+            // Dilatáció vizuális megjelenítése (belső téglalap)
+            const dilatacioRect = new fabric.Rect({
+                left: padding + szoba.dilatacio * scale,
+                top: topPadding + szoba.dilatacio * scale,
+                width: (szoba.x - 2 * szoba.dilatacio) * scale,
+                height: (szoba.y - 2 * szoba.dilatacio) * scale,
+                fill: 'transparent',
+                stroke: '#ff0000',
+                strokeWidth: 1,
+                strokeDashArray: [5, 5],
+                selectable: false,
+                hoverCursor: 'default'
+            });
+            canvas.add(dilatacioRect);
+
             // Deszkák kirajzolása
             lerakottDeszkak.forEach(deszka => {
                 const x = deszka.poz.x * scale + padding;
@@ -292,7 +327,7 @@
 
                     // Tooltip létrehozása a deszka méreteihez és oldalállapotaihoz
                     const tooltip = new fabric.Text(
-                        `Szélesség: ${deszka.deszka.szelesseg} cm\nHosszúság: ${deszka.deszka.hosszusag} cm`, 
+                        `#${deszka.sorszam}\nSzélesség: ${deszka.deszka.szelesseg} cm\nHosszúság: ${deszka.deszka.hosszusag} cm`, 
                         {
                             left: x + width / 2,
                             top: y - 30,

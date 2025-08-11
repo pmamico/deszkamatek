@@ -4,6 +4,7 @@ import hu.pmamico.deszkamatek.Epito;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
 @Slf4j
 public class EpitesTest {
 
@@ -93,5 +94,45 @@ public class EpitesTest {
         assertEquals(OldalAllapot.VAGOTT, remainingDeszka.getAlsoOldal(), "The remaining board should have bottom side cut");
 
         log.info("Test passed: Board with both top and bottom sides cut was excluded from search");
+    }
+
+    @Test
+    public void testSorszamAssignment() {
+        // Create a room
+        Szoba szoba = new Szoba(100, 100);
+
+        // Create three boards
+        Deszka deszka1 = Deszka.builder()
+                .szelesseg(10)
+                .hosszusag(10)
+                .build();
+
+        Deszka deszka2 = Deszka.builder()
+                .szelesseg(10)
+                .hosszusag(20)
+                .build();
+
+        Deszka deszka3 = Deszka.builder()
+                .szelesseg(10)
+                .hosszusag(30)
+                .build();
+
+        // Place the boards
+        szoba.lerak(deszka1);
+        szoba.lerak(deszka2);
+        szoba.lerak(deszka3);
+
+        // Get the placed boards
+        List<LerakottDeszka> lerakottDeszkak = szoba.getLerakottDeszkak();
+
+        // Verify that three boards were placed
+        assertEquals(3, lerakottDeszkak.size(), "Three boards should have been placed");
+
+        // Verify that the sequence numbers are assigned correctly
+        assertEquals(1, lerakottDeszkak.get(0).getSorszam(), "First board should have sequence number 1");
+        assertEquals(2, lerakottDeszkak.get(1).getSorszam(), "Second board should have sequence number 2");
+        assertEquals(3, lerakottDeszkak.get(2).getSorszam(), "Third board should have sequence number 3");
+
+        log.info("Test passed: Sequence numbers are assigned correctly");
     }
 }

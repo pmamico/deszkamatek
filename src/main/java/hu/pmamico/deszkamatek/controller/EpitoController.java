@@ -39,12 +39,13 @@ public class EpitoController {
     @ResponseBody
     public Map<String, Object> getEpito(
             @RequestParam(defaultValue = "460") double x,
-            @RequestParam(defaultValue = "397") double y) {
+            @RequestParam(defaultValue = "397") double y,
+            @RequestParam(defaultValue = "1.5") double dilatacio) {
         // Create a copy of the warehouse for building
         Raktar raktarCopy = raktarService.createRaktarCopy();
 
         var epito = Epito.builder()
-                .szoba(new Szoba(x, y))
+                .szoba(new Szoba(x, y, dilatacio))
                 .raktar(raktarCopy)
                 .build();
 
@@ -60,7 +61,8 @@ public class EpitoController {
         return Map.of(
             "szoba", Map.of(
                 "x", szoba.getX(),
-                "y", szoba.getY()
+                "y", szoba.getY(),
+                "dilatacio", szoba.getDilatacio()
             ),
             "lerakottDeszkak", szoba.getLerakottDeszkak()
         );
