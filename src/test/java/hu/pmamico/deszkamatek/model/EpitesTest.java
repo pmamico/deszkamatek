@@ -3,6 +3,7 @@ package hu.pmamico.deszkamatek.model;
 import hu.pmamico.deszkamatek.Epito;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public class EpitesTest {
 
@@ -40,5 +41,57 @@ public class EpitesTest {
         log.info("marad: "+epito.getRaktar().getRaktarozott().size());
         log.info("marad: "+epito.getRaktar());
         log.info("kesz? " + epito.getSzoba().kesz());
+    }
+
+    @Test
+    public void testBothTopAndBottomCutBoardsAreExcluded() {
+        // Create a warehouse with one normal board and one board with both top and bottom sides cut
+        Raktar raktar = new Raktar();
+
+        // Normal board
+        Deszka normalDeszka = Deszka.builder()
+                .szelesseg(10)
+                .hosszusag(10)
+                .build();
+
+        // Board with both top and bottom sides cut
+        Deszka bothCutDeszka = Deszka.builder()
+                .szelesseg(10)
+                .hosszusag(10)
+                .felsoOldal(OldalAllapot.VAGOTT)
+                .alsoOldal(OldalAllapot.VAGOTT)
+                .build();
+
+        // Add both boards to the warehouse
+        raktar.hozzaad(normalDeszka);
+        raktar.hozzaad(bothCutDeszka);
+
+        // Verify that the warehouse has 2 boards initially
+        assertEquals(2, raktar.getRaktarozott().size(), "Warehouse should have 2 boards initially");
+
+        // Create a requirement that both boards would match dimensionally
+        DeszkaIgeny igeny = DeszkaIgeny.builder()
+                .x(10.0)
+                .y(10.0)
+                .build();
+
+        // Search for a board that matches the requirement
+        Deszka foundDeszka = raktar.keres(igeny, LerakasIrany.ESZAK);
+
+        // Verify that the normal board was found and used
+        assertEquals(10.0, foundDeszka.getSzelesseg(), "The found board should have width 10.0");
+        assertEquals(10.0, foundDeszka.getHosszusag(), "The found board should have length 10.0");
+        assertNotEquals(OldalAllapot.VAGOTT, foundDeszka.getFelsoOldal(), "The found board should not have top side cut");
+        assertNotEquals(OldalAllapot.VAGOTT, foundDeszka.getAlsoOldal(), "The found board should not have bottom side cut");
+
+        // Verify that only the board with both top and bottom sides cut remains in the warehouse
+        assertEquals(1, raktar.getRaktarozott().size(), "One board should remain in the warehouse");
+
+        // Verify that the remaining board is the one with both top and bottom sides cut
+        Deszka remainingDeszka = raktar.getRaktarozott().get(0);
+        assertEquals(OldalAllapot.VAGOTT, remainingDeszka.getFelsoOldal(), "The remaining board should have top side cut");
+        assertEquals(OldalAllapot.VAGOTT, remainingDeszka.getAlsoOldal(), "The remaining board should have bottom side cut");
+
+        log.info("Test passed: Board with both top and bottom sides cut was excluded from search");
     }
 }

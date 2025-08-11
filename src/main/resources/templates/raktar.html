@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="hu" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deszkamatek - Raktár Kezelő</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .form-container {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+        .form-group:last-child {
+            margin-right: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+            border: 1px solid #d6e9c6;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Deszkamatek - Raktár Kezelő</h1>
+
+        <div class="nav-links">
+            <a href="/">Vissza a Szoba Megjelenítőhöz</a>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <h2>Raktár</h2>
+        <p><em>Az építés előtt rendelkezésre álló deszkák.</em></p>
+        <table id="raktar-table">
+            <thead>
+                <tr>
+                    <th>Szélesség</th>
+                    <th>Hosszúság</th>
+                    <th>Bal oldal</th>
+                    <th>Felső oldal</th>
+                    <th>Jobb oldal</th>
+                    <th>Alsó oldal</th>
+                    <th>Darabszám</th>
+                    <th>Műveletek</th>
+                </tr>
+            </thead>
+            <tbody id="raktar-tbody">
+                <!-- Ide kerülnek a raktár elemei -->
+            </tbody>
+        </table>
+
+        <h2>Maradék</h2>
+        <p><em>A szoba építése után megmaradt deszkák. Ez a raktár nem szerkeszthető.</em></p>
+        <table id="maradek-raktar-table">
+            <thead>
+                <tr>
+                    <th>Szélesség</th>
+                    <th>Hosszúság</th>
+                    <th>Bal oldal</th>
+                    <th>Felső oldal</th>
+                    <th>Jobb oldal</th>
+                    <th>Alsó oldal</th>
+                    <th>Darabszám</th>
+                </tr>
+            </thead>
+            <tbody id="maradek-raktar-tbody">
+                <!-- Ide kerülnek a maradék raktár elemei -->
+            </tbody>
+        </table>
+
+        <div class="form-container">
+            <h2>Új Deszka Hozzáadása</h2>
+            <form id="add-deszka-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="szelesseg">Szélesség:</label>
+                        <input type="number" id="szelesseg" name="szelesseg" step="0.1" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hosszusag">Hosszúság:</label>
+                        <input type="number" id="hosszusag" name="hosszusag" step="0.1" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="darabszam">Darabszám:</label>
+                        <input type="number" id="darabszam" name="darabszam" min="1" value="1" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="balOldal">Bal oldal:</label>
+                        <select id="balOldal" name="balOldal" required>
+                            <option value="CSAP">CSAP</option>
+                            <option value="NUT">NUT</option>
+                            <option value="VAGOTT">VAGOTT</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="felsoOldal">Felső oldal:</label>
+                        <select id="felsoOldal" name="felsoOldal" required>
+                            <option value="CSAP">CSAP</option>
+                            <option value="NUT">NUT</option>
+                            <option value="VAGOTT">VAGOTT</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobbOldal">Jobb oldal:</label>
+                        <select id="jobbOldal" name="jobbOldal" required>
+                            <option value="NUT">NUT</option>
+                            <option value="CSAP">CSAP</option>
+                            <option value="VAGOTT">VAGOTT</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="alsoOldal">Alsó oldal:</label>
+                        <select id="alsoOldal" name="alsoOldal" required>
+                            <option value="NUT">NUT</option>
+                            <option value="CSAP">CSAP</option>
+                            <option value="VAGOTT">VAGOTT</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit">Hozzáadás</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Raktár tartalmának lekérése
+        function fetchRaktarData() {
+            // Fetch editable warehouse data
+            fetch('/api/raktar')
+                .then(response => response.json())
+                .then(data => {
+                    displayRaktarData(data, 'raktar-tbody');
+                })
+                .catch(error => {
+                    console.error('Hiba történt:', error);
+                    showMessage('Hiba történt az adatok lekérése közben.', 'error');
+                });
+
+            // Fetch remaining warehouse data
+            fetch('/api/raktar/maradek')
+                .then(response => response.json())
+                .then(data => {
+                    displayRaktarData(data, 'maradek-raktar-tbody');
+                })
+                .catch(error => {
+                    console.error('Hiba történt:', error);
+                    showMessage('Hiba történt a maradék raktár adatainak lekérése közben.', 'error');
+                });
+        }
+
+        // Raktár adatok megjelenítése a táblázatban
+        function displayRaktarData(data, tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
+
+            // Determine column span based on table type
+            const isEditableTable = tbodyId === 'raktar-tbody';
+            const colSpan = isEditableTable ? 8 : 7;
+
+            // Ha nincs adat, üres üzenet megjelenítése
+            if (Object.keys(data).length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = colSpan;
+                cell.textContent = tbodyId === 'maradek-raktar-tbody' ? 
+                    'Még nem készült szoba, vagy a maradék raktár üres.' : 
+                    'A raktár üres.';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
+                tbody.appendChild(row);
+                return;
+            }
+
+            // Adatok megjelenítése
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    const deszka = data[key];
+
+                    const row = document.createElement('tr');
+
+                    const szelessegCell = document.createElement('td');
+                    szelessegCell.textContent = deszka.szelesseg;
+                    row.appendChild(szelessegCell);
+
+                    const hosszusagCell = document.createElement('td');
+                    hosszusagCell.textContent = deszka.hosszusag;
+                    row.appendChild(hosszusagCell);
+
+                    const balOldalCell = document.createElement('td');
+                    balOldalCell.textContent = deszka.balOldal;
+                    row.appendChild(balOldalCell);
+
+                    const felsoOldalCell = document.createElement('td');
+                    felsoOldalCell.textContent = deszka.felsoOldal;
+                    row.appendChild(felsoOldalCell);
+
+                    const jobbOldalCell = document.createElement('td');
+                    jobbOldalCell.textContent = deszka.jobbOldal;
+                    row.appendChild(jobbOldalCell);
+
+                    const alsoOldalCell = document.createElement('td');
+                    alsoOldalCell.textContent = deszka.alsoOldal;
+                    row.appendChild(alsoOldalCell);
+
+                    const darabszamCell = document.createElement('td');
+                    darabszamCell.textContent = deszka.darabszam;
+                    row.appendChild(darabszamCell);
+
+                    // Add delete button for editable warehouse
+                    if (isEditableTable) {
+                        const actionsCell = document.createElement('td');
+                        const deleteButton = document.createElement('button');
+                        deleteButton.innerHTML = '&#10006;'; // X symbol
+                        deleteButton.style.backgroundColor = '#ff4d4d';
+                        deleteButton.style.padding = '5px 10px';
+                        deleteButton.title = 'Törlés';
+
+                        // Store board data as attributes for the delete action
+                        deleteButton.setAttribute('data-szelesseg', deszka.szelesseg);
+                        deleteButton.setAttribute('data-hosszusag', deszka.hosszusag);
+                        deleteButton.setAttribute('data-bal-oldal', deszka.balOldal);
+                        deleteButton.setAttribute('data-felso-oldal', deszka.felsoOldal);
+                        deleteButton.setAttribute('data-jobb-oldal', deszka.jobbOldal);
+                        deleteButton.setAttribute('data-also-oldal', deszka.alsoOldal);
+                        deleteButton.setAttribute('data-darabszam', deszka.darabszam);
+
+                        // Add click event listener
+                        deleteButton.addEventListener('click', function() {
+                            deleteDeszka(this);
+                        });
+
+                        actionsCell.appendChild(deleteButton);
+                        row.appendChild(actionsCell);
+                    }
+
+                    tbody.appendChild(row);
+                }
+            }
+        }
+
+        // Üzenet megjelenítése
+        function showMessage(message, type) {
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = message;
+            messageElement.className = 'message ' + type;
+            messageElement.style.display = 'block';
+
+            // Üzenet eltüntetése 5 másodperc után
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Deszka törlése a raktárból
+        function deleteDeszka(button) {
+            // Get board data from button attributes
+            const deszkaData = {
+                szelesseg: parseFloat(button.getAttribute('data-szelesseg')),
+                hosszusag: parseFloat(button.getAttribute('data-hosszusag')),
+                balOldal: button.getAttribute('data-bal-oldal'),
+                felsoOldal: button.getAttribute('data-felso-oldal'),
+                jobbOldal: button.getAttribute('data-jobb-oldal'),
+                alsoOldal: button.getAttribute('data-also-oldal'),
+                darabszam: parseInt(button.getAttribute('data-darabszam')) // Delete all boards of this type
+            };
+
+            // Confirm deletion
+            if (!confirm(`Biztosan törölni szeretné az összes ilyen típusú deszkát (${deszkaData.darabszam} db)?\nSzélesség: ${deszkaData.szelesseg}, Hosszúság: ${deszkaData.hosszusag}`)) {
+                return;
+            }
+
+            // Send delete request
+            fetch('/api/raktar', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(deszkaData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Hiba történt a deszka törlése közben.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessage('Deszka sikeresen törölve a raktárból!', 'success');
+                fetchRaktarData(); // Refresh both tables
+            })
+            .catch(error => {
+                console.error('Hiba:', error);
+                showMessage(error.message, 'error');
+            });
+        }
+
+        // Űrlap beküldés kezelése
+        document.getElementById('add-deszka-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = {
+                szelesseg: parseFloat(document.getElementById('szelesseg').value),
+                hosszusag: parseFloat(document.getElementById('hosszusag').value),
+                balOldal: document.getElementById('balOldal').value,
+                felsoOldal: document.getElementById('felsoOldal').value,
+                jobbOldal: document.getElementById('jobbOldal').value,
+                alsoOldal: document.getElementById('alsoOldal').value,
+                darabszam: parseInt(document.getElementById('darabszam').value)
+            };
+
+            fetch('/api/raktar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Hiba történt a deszka hozzáadása közben.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessage('Deszka sikeresen hozzáadva a raktárhoz!', 'success');
+                document.getElementById('add-deszka-form').reset();
+                fetchRaktarData(); // Frissítjük mindkét táblázatot
+            })
+            .catch(error => {
+                console.error('Hiba:', error);
+                showMessage(error.message, 'error');
+            });
+        });
+
+        // Oldal betöltésekor lekérjük a raktár adatait
+        document.addEventListener('DOMContentLoaded', fetchRaktarData);
+    </script>
+</body>
+</html>

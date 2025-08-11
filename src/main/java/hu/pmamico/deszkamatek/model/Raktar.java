@@ -14,6 +14,26 @@ public class Raktar {
 
     private List<Deszka> raktarozott = new ArrayList<>();
 
+    /**
+     * Creates a deep copy of this warehouse
+     * @return a new Raktar instance with copies of all planks
+     */
+    public Raktar copy() {
+        Raktar copy = new Raktar();
+        for (Deszka deszka : this.raktarozott) {
+            Deszka deszkaCopy = Deszka.builder()
+                    .szelesseg(deszka.getSzelesseg())
+                    .hosszusag(deszka.getHosszusag())
+                    .balOldal(deszka.getBalOldal())
+                    .felsoOldal(deszka.getFelsoOldal())
+                    .jobbOldal(deszka.getJobbOldal())
+                    .alsoOldal(deszka.getAlsoOldal())
+                    .build();
+            copy.hozzaad(deszkaCopy);
+        }
+        return copy;
+    }
+
 
     public static Raktar build(int db, Deszka deszka) {
         Raktar raktar = new Raktar();
@@ -63,6 +83,9 @@ public class Raktar {
         Iterator<Deszka> iterator = raktarozott.iterator();
         while (iterator.hasNext()) {
             Deszka deszka = iterator.next();
+            if (hasBothTopAndBottomCut(deszka)) {
+                continue; // Skip boards with both top and bottom sides cut
+            }
             if (matchesDimensionsSoftly(deszka, igeny) &&
                     matchesSides(deszka, igeny)) {
                 iterator.remove();
@@ -76,6 +99,9 @@ public class Raktar {
         Iterator<Deszka> it = raktarozott.iterator();
         while (it.hasNext()) {
             Deszka d = it.next();
+            if (hasBothTopAndBottomCut(d)) {
+                continue; // Skip boards with both top and bottom sides cut
+            }
             if (matchesDimensions(d, igeny) && matchesSides(d, igeny)) {
                 it.remove();                 // biztonságos eltávolítás iterálás közben
                 return Optional.of(d);
@@ -89,6 +115,7 @@ public class Raktar {
 
         for (int i = 0; i < raktarozott.size(); i++) {
             Deszka d = raktarozott.get(i);
+            if (hasBothTopAndBottomCut(d)) continue; // Skip boards with both top and bottom sides cut
             if (!canBeCutToMatch(d, igeny)) continue;
 
             boolean hasCut = hasVagottSide(d);
@@ -113,6 +140,11 @@ public class Raktar {
         return deszka.getBalOldal() == OldalAllapot.VAGOTT ||
                deszka.getFelsoOldal() == OldalAllapot.VAGOTT ||
                deszka.getJobbOldal() == OldalAllapot.VAGOTT ||
+               deszka.getAlsoOldal() == OldalAllapot.VAGOTT;
+    }
+
+    private boolean hasBothTopAndBottomCut(Deszka deszka) {
+        return deszka.getFelsoOldal() == OldalAllapot.VAGOTT && 
                deszka.getAlsoOldal() == OldalAllapot.VAGOTT;
     }
 
