@@ -85,7 +85,7 @@
             <button id="calculate-btn">Újraszámolás</button>
         </div>
         <div id="canvas-container">
-            <canvas id="szoba-canvas" width="800" height="600"></canvas>
+            <canvas id="szoba-canvas" width="800" height="700"></canvas>
         </div>
     </div>
 
@@ -213,24 +213,26 @@
 
             // Canvas méretezése a szoba méretéhez
             const canvasWidth = 800;
-            const canvasHeight = 600;
+            const canvasHeight = 700;
             const padding = 50;
+            const topPadding = 100; // Extra padding at the top for tooltips
 
             // Skálázási faktor kiszámítása, hogy a szoba elférjen a canvas-en
             const scaleX = (canvasWidth - 2 * padding) / szoba.x;
-            const scaleY = (canvasHeight - 2 * padding) / szoba.y;
+            const scaleY = (canvasHeight - topPadding - padding) / szoba.y;
             const scale = Math.min(scaleX, scaleY);
 
             // Szoba háttér (halványszürke téglalap)
             const szobaRect = new fabric.Rect({
                 left: padding,
-                top: padding,
+                top: topPadding,
                 width: szoba.x * scale,
                 height: szoba.y * scale,
                 fill: '#e0e0e0',
                 stroke: '#999',
                 strokeWidth: 1,
-                selectable: false
+                selectable: false,
+                hoverCursor: 'default'
             });
             canvas.add(szobaRect);
 
@@ -239,7 +241,7 @@
                 `X tengely: ${szoba.x} cm`, 
                 {
                     left: padding + (szoba.x * scale) / 2,
-                    top: padding + szoba.y * scale + 20,
+                    top: topPadding + szoba.y * scale + 20,
                     fontSize: 14,
                     fill: 'black',
                     originX: 'center',
@@ -253,7 +255,7 @@
                 `Y tengely: ${szoba.y} cm`, 
                 {
                     left: padding - 20,
-                    top: padding + (szoba.y * scale) / 2,
+                    top: topPadding + (szoba.y * scale) / 2,
                     fontSize: 14,
                     fill: 'black',
                     originY: 'center',
@@ -266,7 +268,7 @@
             // Deszkák kirajzolása
             lerakottDeszkak.forEach(deszka => {
                 const x = deszka.poz.x * scale + padding;
-                const y = padding + (szoba.y - deszka.poz.y) * scale;
+                const y = topPadding + (szoba.y - deszka.poz.y) * scale;
                 const width = deszka.deszka.szelesseg * scale;
                 const height = deszka.deszka.hosszusag * scale;
 
@@ -296,10 +298,16 @@
                             top: y - 30,
                             fontSize: 14,
                             fill: 'black',
-                            backgroundColor: 'rgba(255,255,255,0.8)',
+                            backgroundColor: 'rgba(255,255,255,0.9)',
                             padding: 5,
                             originX: 'center',
-                            originY: 'bottom'
+                            originY: 'bottom',
+                            shadow: new fabric.Shadow({
+                                color: 'rgba(0,0,0,0.3)',
+                                blur: 5,
+                                offsetX: 2,
+                                offsetY: 2
+                            })
                         }
                     );
 
@@ -332,7 +340,12 @@
 
                     // Tooltip és jelölők hozzáadása a canvas-hez
                     canvas.add(tooltip);
-                    sideMarkers.forEach(marker => canvas.add(marker));
+                    tooltip.bringToFront(); // Ensure tooltip is on top
+
+                    sideMarkers.forEach(marker => {
+                        canvas.add(marker);
+                        marker.bringToFront(); // Ensure markers are on top
+                    });
 
                     // Tooltip és jelölők tárolása a deszkaRect objektumban
                     this.tooltip = tooltip;
@@ -357,6 +370,167 @@
 
                     canvas.renderAll();
                 });
+            });
+
+            // Távolságmérés az üres területekhez
+            const boardRects = [];
+            lerakottDeszkak.forEach(deszka => {
+                const x = deszka.poz.x * scale + padding;
+                const y = topPadding + (szoba.y - deszka.poz.y) * scale;
+                const width = deszka.deszka.szelesseg * scale;
+                const height = deszka.deszka.hosszusag * scale;
+
+                boardRects.push({
+                    left: x,
+                    top: y,
+                    right: x + width,
+                    bottom: y + height,
+                    width: width,
+                    height: height,
+                    realWidth: deszka.deszka.szelesseg,
+                    realHeight: deszka.deszka.hosszusag
+                });
+            });
+
+            // Távolságmérés tooltip
+            let distanceTooltip = null;
+
+            // Egér mozgás eseménykezelő a szobában
+            canvas.on('mouse:move', function(options) {
+                const pointer = canvas.getPointer(options.e);
+                const roomLeft = padding;
+                const roomTop = topPadding;
+                const roomRight = padding + szoba.x * scale;
+                const roomBottom = topPadding + szoba.y * scale;
+
+                // Ellenőrizzük, hogy az egér a szobán belül van-e
+                if (pointer.x >= roomLeft && pointer.x <= roomRight && 
+                    pointer.y >= roomTop && pointer.y <= roomBottom) {
+
+                    // Ellenőrizzük, hogy az egér valamelyik deszkán van-e
+                    let isOverBoard = false;
+                    for (const board of boardRects) {
+                        if (pointer.x >= board.left && pointer.x <= board.right && 
+                            pointer.y >= board.top && pointer.y <= board.bottom) {
+                            isOverBoard = true;
+                            break;
+                        }
+                    }
+
+                    // Ha az egér üres területen van, számoljuk ki a távolságokat
+                    if (!isOverBoard) {
+                        // Távolságok számítása a szoba szélétől a legközelebbi deszkákig
+
+                        // Távolság a legközelebbi deszkától minden irányban - mindig a szoba szélétől mérve
+                        let minDistToLeftBoard = Infinity;
+                        let minDistToRightBoard = Infinity;
+                        let minDistToTopBoard = Infinity;
+                        let minDistToBottomBoard = Infinity;
+
+                        // Minden deszkára kiszámoljuk a távolságokat a szoba szélétől
+                        for (const board of boardRects) {
+                            // Bal szélétől (bal szél és a legbaloldalibb deszka közötti távolság)
+                            if (board.left > roomLeft) {
+                                const distFromLeftEdge = (board.left - roomLeft) / scale;
+                                minDistToLeftBoard = Math.min(minDistToLeftBoard, distFromLeftEdge);
+                            }
+
+                            // Jobb szélétől (jobb szél és a legjobboldalibb deszka közötti távolság)
+                            if (board.right < roomRight) {
+                                const distFromRightEdge = (roomRight - board.right) / scale;
+                                minDistToRightBoard = Math.min(minDistToRightBoard, distFromRightEdge);
+                            }
+
+                            // Felső szélétől (felső szél és a legfelsőbb deszka közötti távolság)
+                            if (board.top > roomTop) {
+                                const distFromTopEdge = (board.top - roomTop) / scale;
+                                minDistToTopBoard = Math.min(minDistToTopBoard, distFromTopEdge);
+                            }
+
+                            // Alsó szélétől (alsó szél és a legalsóbb deszka közötti távolság)
+                            if (board.bottom < roomBottom) {
+                                const distFromBottomEdge = (roomBottom - board.bottom) / scale;
+                                minDistToBottomBoard = Math.min(minDistToBottomBoard, distFromBottomEdge);
+                            }
+                        }
+
+                        // Tooltip szöveg összeállítása - csak a legkisebb távolságot mutatjuk
+                        let tooltipText = 'Üres:\n';
+
+                        // Megkeressük a legkisebb távolságot a négy irány közül
+                        let minDistance = Infinity;
+                        let minDirection = '';
+
+                        // Bal oldal
+                        if (minDistToLeftBoard !== Infinity && minDistToLeftBoard < minDistance) {
+                            minDistance = minDistToLeftBoard;
+                            minDirection = 'Bal';
+                        }
+
+                        // Jobb oldal
+                        if (minDistToRightBoard !== Infinity && minDistToRightBoard < minDistance) {
+                            minDistance = minDistToRightBoard;
+                            minDirection = 'Jobb';
+                        }
+
+                        // Felső oldal
+                        if (minDistToTopBoard !== Infinity && minDistToTopBoard < minDistance) {
+                            minDistance = minDistToTopBoard;
+                            minDirection = 'Felső';
+                        }
+
+                        // Alsó oldal
+                        if (minDistToBottomBoard !== Infinity && minDistToBottomBoard < minDistance) {
+                            minDistance = minDistToBottomBoard;
+                            minDirection = 'Alsó';
+                        }
+
+                        // Csak a legkisebb távolságot jelenítjük meg
+                        if (minDirection !== '') {
+                            tooltipText += `${minDirection}: ${Math.round(minDistance)} cm`;
+                        } else {
+                            tooltipText += 'Nincs deszka a közelben';
+                        }
+
+                        // Régi tooltip eltávolítása, ha létezik
+                        if (distanceTooltip) {
+                            canvas.remove(distanceTooltip);
+                        }
+
+                        // Új tooltip létrehozása
+                        distanceTooltip = new fabric.Text(tooltipText, {
+                            left: pointer.x,
+                            top: pointer.y - 10,
+                            fontSize: 12,
+                            fill: 'black',
+                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            padding: 5,
+                            originX: 'center',
+                            originY: 'bottom',
+                            selectable: false,
+                            shadow: new fabric.Shadow({
+                                color: 'rgba(0,0,0,0.3)',
+                                blur: 5,
+                                offsetX: 2,
+                                offsetY: 2
+                            })
+                        });
+
+                        canvas.add(distanceTooltip);
+                        distanceTooltip.bringToFront(); // Ensure tooltip is on top
+                        canvas.renderAll();
+                    } else if (distanceTooltip) {
+                        // Ha deszkán van az egér, távolítsuk el a távolság tooltipet
+                        canvas.remove(distanceTooltip);
+                        distanceTooltip = null;
+                        canvas.renderAll();
+                    }
+                } else if (distanceTooltip) {
+                    // Ha a szobán kívül van az egér, távolítsuk el a távolság tooltipet
+                    canvas.remove(distanceTooltip);
+                    distanceTooltip = null;
+                    canvas.renderAll();
+                }
             });
 
             canvas.renderAll();

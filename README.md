@@ -1,5 +1,7 @@
 TODO
 
+- [ ] jelmagyarázat
+- [ ] nagyobb canvas
 - [x] opcionálisan meg lehessen jeleníteni a nút, csap és vágás helyeket külön 
 - [x] formon lehessen megadni a raktárat és a szoba méretét
 - [ ] jelenjen meg a raktár tartalma kicsiben
