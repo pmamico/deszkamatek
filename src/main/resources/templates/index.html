@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="hu" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deszkamatek - Szoba Megjelenítő</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        #canvas-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Deszkamatek - Szoba Megjelenítő</h1>
+        <div id="canvas-container">
+            <canvas id="szoba-canvas" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <!-- Fabric.js könyvtár betöltése CDN-ről -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    
+    <script>
+        // Fabric.js canvas inicializálása
+        const canvas = new fabric.Canvas('szoba-canvas');
+        
+        // Szoba adatok lekérése a szerverről
+        fetch('/api/szoba')
+            .then(response => response.json())
+            .then(data => {
+                renderSzoba(data);
+            })
+            .catch(error => console.error('Hiba történt:', error));
+        
+        // Szoba és deszkák megjelenítése
+        function renderSzoba(data) {
+            const szoba = data.szoba;
+            const lerakottDeszkak = data.lerakottDeszkak;
+            
+            // Canvas méretezése a szoba méretéhez
+            const canvasWidth = 800;
+            const canvasHeight = 600;
+            const padding = 50;
+            
+            // Skálázási faktor kiszámítása, hogy a szoba elférjen a canvas-en
+            const scaleX = (canvasWidth - 2 * padding) / szoba.x;
+            const scaleY = (canvasHeight - 2 * padding) / szoba.y;
+            const scale = Math.min(scaleX, scaleY);
+            
+            // Szoba háttér (halványszürke téglalap)
+            const szobaRect = new fabric.Rect({
+                left: padding,
+                top: padding,
+                width: szoba.x * scale,
+                height: szoba.y * scale,
+                fill: '#e0e0e0',
+                stroke: '#999',
+                strokeWidth: 1,
+                selectable: false
+            });
+            canvas.add(szobaRect);
+            
+            // Deszkák kirajzolása
+            lerakottDeszkak.forEach(deszka => {
+                const x = deszka.poz.x * scale + padding;
+                const y = padding + (szoba.y - deszka.poz.y) * scale;
+                const width = deszka.deszka.szelesseg * scale;
+                const height = deszka.deszka.hosszusag * scale;
+                
+                const deszkaRect = new fabric.Rect({
+                    left: x,
+                    top: y,
+                    width: width,
+                    height: height,
+                    fill: '#8B4513',  // Barna szín a deszkáknak
+                    stroke: '#5D2906',
+                    strokeWidth: 1,
+                    selectable: false,
+                    opacity: 0.8
+                });
+                
+                canvas.add(deszkaRect);
+                
+                // Deszka információk hozzáadása tooltip-ként
+                deszkaRect.on('mouseover', function() {
+                    this.set('opacity', 1);
+                    canvas.renderAll();
+                });
+                
+                deszkaRect.on('mouseout', function() {
+                    this.set('opacity', 0.8);
+                    canvas.renderAll();
+                });
+            });
+            
+            canvas.renderAll();
+        }
+    </script>
+</body>
+</html>

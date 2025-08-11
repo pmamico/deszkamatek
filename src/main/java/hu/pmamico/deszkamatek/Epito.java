@@ -3,12 +3,16 @@ package hu.pmamico.deszkamatek;
 
 import hu.pmamico.deszkamatek.model.Raktar;
 import hu.pmamico.deszkamatek.model.Szoba;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class Epito {
 
