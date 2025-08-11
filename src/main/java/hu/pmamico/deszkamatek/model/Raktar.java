@@ -102,19 +102,9 @@ public class Raktar {
         // If we reach here, no suitable board was found
         log.error("Nem található megfelelő deszka az igényhez: {}", igeny);
 
-        // Create a minimal board to satisfy the requirement
-        // This is a fallback solution to prevent the application from crashing
-        Deszka minimalDeszka = Deszka.builder()
-                .szelesseg(igeny.getX() != null ? igeny.getX() : 15.5) // Default width if not specified
-                .hosszusag(igeny.getY() != null ? igeny.getY() : 0.5) // Minimal length to avoid validation errors
-                .balOldal(igeny.getBalOldal() != null ? igeny.getBalOldal() : OldalAllapot.CSAP)
-                .felsoOldal(igeny.getFelsoOldal() != null ? igeny.getFelsoOldal() : OldalAllapot.CSAP)
-                .jobbOldal(igeny.getJobbOldal() != null ? igeny.getJobbOldal() : OldalAllapot.NUT)
-                .alsoOldal(igeny.getAlsoOldal() != null ? igeny.getAlsoOldal() : OldalAllapot.NUT)
-                .build();
-
-        log.info("Létrehozva minimális deszka: {}", minimalDeszka);
-        return minimalDeszka;
+        // Return null to indicate that no suitable board was found
+        // This will allow the building process to skip this area
+        return null;
     }
 
 

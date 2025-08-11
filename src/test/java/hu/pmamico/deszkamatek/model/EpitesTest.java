@@ -135,4 +135,41 @@ public class EpitesTest {
 
         log.info("Test passed: Sequence numbers are assigned correctly");
     }
+
+    @Test
+    public void testBuildingWithInsufficientBoards() {
+        // Create a room with specific dimensions
+        Szoba szoba = new Szoba(100, 100);
+
+        // Create a warehouse with limited boards
+        // We'll add only 5 boards, which is not enough to cover the entire room
+        Raktar raktar = new Raktar();
+        for (int i = 0; i < 5; i++) {
+            Deszka deszka = Deszka.builder()
+                    .szelesseg(10)
+                    .hosszusag(10)
+                    .build();
+            raktar.hozzaad(deszka);
+        }
+
+        // Create the builder
+        Epito epito = Epito.builder()
+                .szoba(szoba)
+                .raktar(raktar)
+                .build();
+
+        // Run the building process
+        epito.epit();
+
+        // Verify that the warehouse is empty (all available boards were used)
+        assertTrue(raktar.ures(), "Warehouse should be empty after building");
+
+        // Verify that only 5 boards were placed in the room
+        assertEquals(5, szoba.getLerakottDeszkak().size(), "Only 5 boards should have been placed");
+
+        // Verify that the room is not marked as complete
+        assertFalse(szoba.kesz(), "Room should not be marked as complete");
+
+        log.info("Test passed: Building process handled insufficient boards correctly");
+    }
 }

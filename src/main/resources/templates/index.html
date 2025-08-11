@@ -91,9 +91,46 @@
                 <input type="number" id="dilatacio-input" value="1.5" min="0" max="10" step="0.1">
             </div>
             <button id="calculate-btn">Újraszámolás</button>
+            <button id="reset-btn">Visszaállítás</button>
         </div>
+
         <div id="canvas-container">
             <canvas id="szoba-canvas" width="800" height="800"></canvas>
+        </div>
+
+        <!-- Jelmagyarázat -->
+        <div class="legend" style="margin: 20px 0; padding: 10px; background-color: #f0f0f0; border-radius: 5px; display: flex; justify-content: center;">
+            <div style="margin: 0 15px; display: flex; align-items: center;">
+                <div style="width: 20px; height: 20px; border-radius: 50%; background-color: blue; margin-right: 5px;"></div>
+                <span>C - Csap</span>
+            </div>
+            <div style="margin: 0 15px; display: flex; align-items: center;">
+                <div style="width: 20px; height: 20px; border-radius: 50%; background-color: green; margin-right: 5px;"></div>
+                <span>N - Nút</span>
+            </div>
+            <div style="margin: 0 15px; display: flex; align-items: center;">
+                <div style="width: 20px; height: 20px; border-radius: 50%; background-color: red; margin-right: 5px;"></div>
+                <span>V - Vágás</span>
+            </div>
+        </div>
+
+        <!-- Statisztikák -->
+        <div id="statistics" class="statistics" style="margin: 20px 0; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
+            <h3 style="margin-top: 0; text-align: center;">Statisztikák</h3>
+            <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                <div style="margin: 5px 10px;">
+                    <strong>Vágások száma:</strong> <span id="cuts-count">0</span>
+                </div>
+                <div style="margin: 5px 10px;">
+                    <strong>Felhasznált deszkák száma:</strong> <span id="boards-count">0</span>
+                </div>
+                <div style="margin: 5px 10px;">
+                    <strong>Vásárolt m²:</strong> <span id="boards-area">0</span> m²
+                </div>
+                <div style="margin: 5px 10px;">
+                    <strong>Burkolt felület:</strong> <span id="covered-area">0</span> m²
+                </div>
+            </div>
         </div>
     </div>
 
@@ -195,6 +232,17 @@
             fetchSzobaData();
         });
 
+        // Visszaállítás gomb eseménykezelő
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            // Eredeti paraméterek visszaállítása
+            document.getElementById('x-input').value = 460;
+            document.getElementById('y-input').value = 397;
+            document.getElementById('dilatacio-input').value = 1.5;
+
+            // Újraszámolás az eredeti paraméterekkel
+            fetchSzobaData();
+        });
+
         // Szoba adatok lekérése a szerverről
         function fetchSzobaData() {
             const xInput = document.getElementById('x-input');
@@ -212,8 +260,67 @@
                 .then(response => response.json())
                 .then(data => {
                     renderSzoba(data);
+                    updateStatistics(data);
                 })
                 .catch(error => console.error('Hiba történt:', error));
+        }
+
+        // Statisztikák frissítése
+        function updateStatistics(data) {
+            console.log("Updating statistics with data:", JSON.stringify(data));
+
+            // Check if data exists
+            if (!data) {
+                console.error("No data received");
+                return;
+            }
+
+            // Check if lerakottDeszkak exists and has items
+            if (data.lerakottDeszkak) {
+                console.log("Placed boards count:", data.lerakottDeszkak.length);
+            } else {
+                console.error("No placed boards data found");
+            }
+
+            // Check if statistics data exists
+            if (data.statisztikak) {
+                console.log("Statistics data:", JSON.stringify(data.statisztikak));
+
+                // Update UI with statistics data
+                document.getElementById('cuts-count').textContent = data.statisztikak.vagasokSzama || 0;
+                document.getElementById('boards-count').textContent = data.statisztikak.deszkakSzama || 0;
+                document.getElementById('boards-area').textContent = (data.statisztikak.deszkakTeruletM2 || 0).toFixed(2);
+                document.getElementById('covered-area').textContent = (data.statisztikak.burkoltFeluletM2 || 0).toFixed(2);
+            } else {
+                console.error("No statistics data found in the response");
+
+                // If no statistics data but we have placed boards, calculate statistics manually
+                if (data.lerakottDeszkak && data.lerakottDeszkak.length > 0) {
+                    console.log("Calculating statistics manually from placed boards");
+
+                    // Set boards count
+                    const boardsCount = data.lerakottDeszkak.length;
+                    document.getElementById('boards-count').textContent = boardsCount;
+
+                    // Calculate and set board area
+                    let totalAreaCm2 = 0;
+                    data.lerakottDeszkak.forEach(board => {
+                        if (board.deszka) {
+                            totalAreaCm2 += board.deszka.szelesseg * board.deszka.hosszusag;
+                        }
+                    });
+                    const totalAreaM2 = totalAreaCm2 / 10000;
+                    document.getElementById('boards-area').textContent = totalAreaM2.toFixed(2);
+
+                    // Calculate and set covered area if we have room dimensions
+                    if (data.szoba) {
+                        const width = data.szoba.x - 2 * data.szoba.dilatacio;
+                        const height = data.szoba.y - 2 * data.szoba.dilatacio;
+                        const coveredAreaM2 = (width * height) / 10000;
+                        document.getElementById('covered-area').textContent = coveredAreaM2.toFixed(2);
+                    }
+                }
+            }
         }
 
         // Szoba és deszkák megjelenítése
@@ -303,6 +410,50 @@
                 hoverCursor: 'default'
             });
             canvas.add(dilatacioRect);
+
+            // Ajtó rajzolása a jobb alsó sarokban
+            const doorWidth = 60 * scale;
+            const doorHeight = 10 * scale;
+            const doorX = padding + szoba.x * scale - doorWidth; // Jobb oldal
+            const doorY = topPadding + szoba.y * scale - doorHeight; // Alsó rész
+
+            // Ajtó téglalap
+            const doorRect = new fabric.Rect({
+                left: doorX,
+                top: doorY,
+                width: doorWidth,
+                height: doorHeight,
+                fill: 'white',
+                stroke: 'black',
+                strokeWidth: 2,
+                selectable: false
+            });
+
+            // Ajtó nyitási ív
+            const doorArc = new fabric.Path('M 0 0 A 60 60 0 0 1 60 60', {
+                left: doorX,
+                top: doorY,
+                stroke: 'black',
+                strokeWidth: 1,
+                fill: 'transparent',
+                scaleX: doorWidth / 60,
+                scaleY: doorHeight / 60,
+                selectable: false
+            });
+
+            // Ajtó felirat
+            const doorLabel = new fabric.Text('Ajtó', {
+                left: doorX + doorWidth / 2,
+                top: doorY - 10,
+                fontSize: 12,
+                fill: 'black',
+                originX: 'center',
+                selectable: false
+            });
+
+            canvas.add(doorRect);
+            canvas.add(doorArc);
+            canvas.add(doorLabel);
 
             // Deszkák kirajzolása
             lerakottDeszkak.forEach(deszka => {

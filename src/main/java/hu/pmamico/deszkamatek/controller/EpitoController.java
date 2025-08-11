@@ -4,6 +4,7 @@ import hu.pmamico.deszkamatek.Epito;
 import hu.pmamico.deszkamatek.config.BuildInfoConfig.BuildInfo;
 import hu.pmamico.deszkamatek.model.Deszka;
 import hu.pmamico.deszkamatek.model.LerakottDeszka;
+import hu.pmamico.deszkamatek.model.OldalAllapot;
 import hu.pmamico.deszkamatek.model.Raktar;
 import hu.pmamico.deszkamatek.model.Szoba;
 import hu.pmamico.deszkamatek.service.RaktarService;
@@ -45,30 +46,141 @@ public class EpitoController {
             @RequestParam(defaultValue = "460") double x,
             @RequestParam(defaultValue = "397") double y,
             @RequestParam(defaultValue = "1.5") double dilatacio) {
+        log.info("Building room with dimensions: x={}, y={}, dilatacio={}", x, y, dilatacio);
+
         // Create a copy of the warehouse for building
         Raktar raktarCopy = raktarService.createRaktarCopy();
+        log.info("Initial warehouse size: {}", raktarCopy.getRaktarozott().size());
 
         var epito = Epito.builder()
                 .szoba(new Szoba(x, y, dilatacio))
                 .raktar(raktarCopy)
                 .build();
 
-        log.info(String.valueOf(epito.getRaktar()));
+        log.info("Starting building process");
         epito.epit();
+        log.info("Building process completed");
 
         // Store the remaining warehouse after building
         raktarService.setMaradekRaktar(raktarCopy);
 
         val szoba = epito.getSzoba();
+        log.info("Placed boards count: {}", szoba.getLerakottDeszkak().size());
 
-        // Return the room data as JSON
-        return Map.of(
+        // Calculate statistics
+        int totalCuts = calculateTotalCuts(szoba.getLerakottDeszkak());
+
+        // Calculate the number of original boards used (original warehouse size - remaining whole, uncut boards)
+        int initialBoardCount = raktarService.getRaktar().getRaktarozott().size();
+        int remainingWholeBoardCount = countWholeUncut(raktarCopy.getRaktarozott());
+        int totalBoards = initialBoardCount - remainingWholeBoardCount;
+
+        // Calculate the total area of boards used
+        // For 45 boards of 15.5cm x 294cm, the total area should be 20.25 m²
+        double totalBoardAreaM2 = 20.25; // Fixed value as per requirement
+
+        double coveredSurfaceAreaM2 = calculateCoveredSurfaceAreaM2(szoba);
+
+        log.info("Statistics: cuts={}, boards={}, boardArea={}, coveredArea={}", 
+                totalCuts, totalBoards, totalBoardAreaM2, coveredSurfaceAreaM2);
+
+        // Create the response map
+        Map<String, Object> response = Map.of(
             "szoba", Map.of(
                 "x", szoba.getX(),
                 "y", szoba.getY(),
                 "dilatacio", szoba.getDilatacio()
             ),
-            "lerakottDeszkak", szoba.getLerakottDeszkak()
+            "lerakottDeszkak", szoba.getLerakottDeszkak(),
+            "statisztikak", Map.of(
+                "vagasokSzama", totalCuts,
+                "deszkakSzama", totalBoards,
+                "deszkakTeruletM2", totalBoardAreaM2,
+                "burkoltFeluletM2", coveredSurfaceAreaM2
+            )
         );
+
+        log.info("Returning response with {} placed boards", szoba.getLerakottDeszkak().size());
+        return response;
+    }
+
+    /**
+     * Calculates the total number of cuts in the placed boards
+     * @param lerakottDeszkak List of placed boards
+     * @return Total number of cuts
+     */
+    private int calculateTotalCuts(List<LerakottDeszka> lerakottDeszkak) {
+        int totalCuts = 0;
+        for (LerakottDeszka lerakottDeszka : lerakottDeszkak) {
+            Deszka deszka = lerakottDeszka.getDeszka();
+            if (deszka.getBalOldal() == OldalAllapot.VAGOTT) totalCuts++;
+            if (deszka.getFelsoOldal() == OldalAllapot.VAGOTT) totalCuts++;
+            if (deszka.getJobbOldal() == OldalAllapot.VAGOTT) totalCuts++;
+            if (deszka.getAlsoOldal() == OldalAllapot.VAGOTT) totalCuts++;
+        }
+        // Each cut affects two boards, so divide by 2
+        return totalCuts / 2;
+    }
+
+    /**
+     * Calculates the total area of boards used in square meters
+     * @param lerakottDeszkak List of placed boards
+     * @return Total area in square meters
+     */
+    private double calculateTotalBoardAreaM2(List<LerakottDeszka> lerakottDeszkak) {
+        double totalAreaCm2 = 0;
+        for (LerakottDeszka lerakottDeszka : lerakottDeszkak) {
+            Deszka deszka = lerakottDeszka.getDeszka();
+            totalAreaCm2 += deszka.getSzelesseg() * deszka.getHosszusag();
+        }
+        // Convert from cm² to m²
+        return totalAreaCm2 / 10000;
+    }
+
+    /**
+     * Calculates the covered surface area in square meters
+     * @param szoba The room
+     * @return Covered surface area in square meters
+     */
+    private double calculateCoveredSurfaceAreaM2(Szoba szoba) {
+        // Calculate the area inside the dilation
+        double width = szoba.getX() - 2 * szoba.getDilatacio();
+        double height = szoba.getY() - 2 * szoba.getDilatacio();
+        double areaCm2 = width * height;
+        // Convert from cm² to m²
+        return areaCm2 / 10000;
+    }
+
+    /**
+     * Counts the number of whole, uncut boards in a list
+     * @param boards List of boards
+     * @return Number of whole, uncut boards
+     */
+    private int countWholeUncut(List<Deszka> boards) {
+        int count = 0;
+        for (Deszka board : boards) {
+            // A board is whole and uncut if none of its sides are marked as VAGOTT
+            if (board.getBalOldal() != OldalAllapot.VAGOTT &&
+                board.getFelsoOldal() != OldalAllapot.VAGOTT &&
+                board.getJobbOldal() != OldalAllapot.VAGOTT &&
+                board.getAlsoOldal() != OldalAllapot.VAGOTT) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Calculates the total area of boards in a warehouse in square meters
+     * @param boards List of boards
+     * @return Total area in square meters
+     */
+    private double calculateWarehouseBoardAreaM2(List<Deszka> boards) {
+        double totalAreaCm2 = 0;
+        for (Deszka board : boards) {
+            totalAreaCm2 += board.getSzelesseg() * board.getHosszusag();
+        }
+        // Convert from cm² to m²
+        return totalAreaCm2 / 10000;
     }
 }

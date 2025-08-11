@@ -31,6 +31,20 @@ public class RaktarService {
         raktar.hozzaad(45, defaultDeszka);
 
         log.info("Warehouse initialized with {} boards", raktar.getRaktarozott().size());
+        log.info("Total warehouse area: {} m²", calculateTotalAreaM2());
+    }
+
+    /**
+     * Calculates the total area of all boards in the warehouse in square meters
+     * @return Total area in square meters
+     */
+    public double calculateTotalAreaM2() {
+        double totalAreaCm2 = 0;
+        for (Deszka board : raktar.getRaktarozott()) {
+            totalAreaCm2 += board.getSzelesseg() * board.getHosszusag();
+        }
+        // Convert from cm² to m²
+        return totalAreaCm2 / 10000;
     }
 
     /**
